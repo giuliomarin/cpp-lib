@@ -12,15 +12,15 @@ set(ARCH_FOLDER "${SYS_NAME}/${ARCH}")
 #------------------
 #      OPENCV
 #------------------
-set (OPENCV_FOLDER opencv/${ARCH_FOLDER})
+set(OPENCV_FOLDER opencv/${ARCH_FOLDER})
+set(OPENCV_COMMIT_TAG 4.1.1)
 function(compile_opencv)
-  set (ADD_ARGS ${ADD_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/${OPENCV_FOLDER})
+	set (ADD_ARGS ${ADD_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/${OPENCV_FOLDER})
 
-  set (ADD_ARGS ${ADD_ARGS} -DBUILD_WITH_DEBUG_INFO=OFF)
+	set (ADD_ARGS ${ADD_ARGS} -DBUILD_WITH_DEBUG_INFO=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_WITH_DYNAMIC_IPP=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_CUBLAS=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_CUDA=OFF)
-	set (ADD_ARGS ${ADD_ARGS} -DWITH_CUFFT=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_EIGEN=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_IPP=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_IPP_A=OFF)
@@ -35,6 +35,7 @@ function(compile_opencv)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_PNG=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_VTK=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DWITH_WEBP=OFF)
+	set (ADD_ARGS ${ADD_ARGS} -DWITH_FFMPEG=ON)
 
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_CUDA_STUBS=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_DOCS=OFF)
@@ -72,7 +73,7 @@ function(compile_opencv)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_phase_unwrapping=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_photo=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_plot=ON)
-	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_python2=ON)
+	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_python2=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_reg=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_rgbd=ON)
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_opencv_saliency=OFF)
@@ -96,46 +97,56 @@ function(compile_opencv)
 	set (ADD_ARGS ${ADD_ARGS} -DCUDA_BUILD_CUBIN=OFF)
 	set (ADD_ARGS ${ADD_ARGS} -DCUDA_BUILD_EMULATION=OFF)
 
-	# set (ADD_ARGS ${ADD_ARGS} -DEIGEN_INCLUDE_PATH=${CMAKE_CURRENT_SOURCE_DIR}/eigen/include/eigen3)
-
-  # Platform related config
+	# Platform related config
 	if (WIN32)
 		set (ADD_ARGS ${ADD_ARGS} -DBUILD_TBB=OFF)
 		set (ADD_ARGS ${ADD_ARGS} -DWITH_TBB=OFF)
 		set (ADD_ARGS ${ADD_ARGS} -DBUILD_WITH_STATIC_CRT=OFF)
 		set (ADD_ARGS ${ADD_ARGS} -DENABLE_PRECOMPILED_HEADERS=ON)
-	else()
-		set (ADD_ARGS ${ADD_ARGS} -DWITH_TBB=ON)
-		set (ADD_ARGS ${ADD_ARGS} -DBUILD_TBB=ON)
-		set (ADD_ARGS ${ADD_ARGS} -DENABLE_PRECOMPILED_HEADERS=OFF)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_QT=OFF)
+    set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=OFF)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=ON)
 	endif()
 
 	if (LINUX)
-		if (${AQ_TARGET_ARCH} STREQUAL aarch64)
-			set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=OFF)
-			set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=OFF)
-		else()
-			set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=ON)
-			set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=ON)
-		endif()
-		set (ADD_ARGS ${ADD_ARGS} -DWITH_QT=ON)
-	else()
-		set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=ON)
-		set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=ON)
-		set (ADD_ARGS ${ADD_ARGS} -DWITH_QT=OFF)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_TBB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DBUILD_TBB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_QT=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=ON)
 	endif()
+  
+  if (APPLE)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_TBB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DBUILD_TBB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DENABLE_PRECOMPILED_HEADERS=OFF)
+    set (ADD_ARGS ${ADD_ARGS} -DBUILD_ZLIB=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_OPENCL=ON)
+    set (ADD_ARGS ${ADD_ARGS} -DWITH_QT=OFF)
+  endif()
 
 	set (ADD_ARGS ${ADD_ARGS} -DOPENCV_EXTRA_MODULES_PATH=${CMAKE_CURRENT_SOURCE_DIR}/src/opencv_contrib/modules)
-
-	include(ExternalProject)
+	
+  include(ExternalProject)
+  ExternalProject_Add(opencv-contrib
+    GIT_SHALLOW 1
+    GIT_REPOSITORY https://github.com/opencv/opencv_contrib
+    GIT_TAG ${OPENCV_COMMIT_TAG}
+    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv_contrib
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND "")
+  
 	ExternalProject_Add(opencv
-    GIT_REPOSITORY https://github.com/opencv/opencv.git
-    GIT_TAG 3.2.0
-    PATCH_COMMAND COMMAND git apply ${CMAKE_CURRENT_SOURCE_DIR}/patch/opencv
-    SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
+    GIT_SHALLOW 1
+    GIT_REPOSITORY https://github.com/opencv/opencv
+    GIT_TAG ${OPENCV_COMMIT_TAG}
+	  SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/opencv
     PREFIX ${CMAKE_BINARY_DIR}/build/${OPENCV_FOLDER}
-    CMAKE_ARGS ${ADD_ARGS}
-  )
+	  CMAKE_ARGS ${ADD_ARGS}
+	  INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${OPENCV_FOLDER}
+	)
+	add_dependencies(opencv opencv-contrib)
 endfunction(compile_opencv)
 
 #------------------
@@ -152,7 +163,7 @@ function(compile_glfw)
 	include(ExternalProject)
 	ExternalProject_Add(glfw
     GIT_REPOSITORY https://github.com/glfw/glfw.git
-    GIT_TAG 3.2.1
+    GIT_TAG 3.3
     SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/glfw
     PREFIX ${CMAKE_BINARY_DIR}/build/${GLFW_FOLDER}
     CMAKE_ARGS ${ADD_ARGS}
