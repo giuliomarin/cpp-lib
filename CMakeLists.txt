@@ -1,10 +1,6 @@
 project(BuildLibraries)
 cmake_minimum_required(VERSION 2.8.7)
-
-include(cmake/Log.cmake)
-include(cmake/Config.cmake)
-include(cmake/FindArch.cmake)
-
+include(Config.cmake)
 string(TOLOWER ${CMAKE_SYSTEM_NAME} SYS_NAME)
 string(TOLOWER ${TARGET_ARCH} ARCH)
 set(ARCH_FOLDER "${SYS_NAME}/${ARCH}")
@@ -14,7 +10,7 @@ set(ARCH_FOLDER "${SYS_NAME}/${ARCH}")
 #------------------
 set(OPENCV_FOLDER opencv/${ARCH_FOLDER})
 set(OPENCV_COMMIT_TAG 4.1.1)
-function(compile_opencv)
+function(build_opencv)
 	set (ADD_ARGS ${ADD_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/${OPENCV_FOLDER})
 
 	set (ADD_ARGS ${ADD_ARGS} -DBUILD_WITH_DEBUG_INFO=OFF)
@@ -147,13 +143,13 @@ function(compile_opencv)
 	  INSTALL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${OPENCV_FOLDER}
 	)
 	add_dependencies(opencv opencv-contrib)
-endfunction(compile_opencv)
+endfunction(build_opencv)
 
 #------------------
 #      GLFW
 #------------------
 set (GLFW_FOLDER glfw/${ARCH_FOLDER})
-function(compile_glfw)
+function(build_glfw)
   set (ADD_ARGS ${ADD_ARGS} -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_SOURCE_DIR}/${GLFW_FOLDER})
 
 	set (ADD_ARGS ${ADD_ARGS} -DGLFW_BUILD_DOCS=OFF)
@@ -168,21 +164,18 @@ function(compile_glfw)
     PREFIX ${CMAKE_BINARY_DIR}/build/${GLFW_FOLDER}
     CMAKE_ARGS ${ADD_ARGS}
   )
-endfunction(compile_glfw)
+endfunction(build_glfw)
 
 #------------------
 #      BUILD
 #------------------
 
-option(BUILD_opencv "Build opencv" OFF)
+option(BUILD_opencv "Build opencv" ON)
 if (BUILD_opencv)
-    compile_opencv()
+    build_opencv()
 endif()
-option(BUILD_pcl "Build pcl" OFF)
-if (BUILD_pcl)
-    compile_pcl()
-endif()
-option(BUILD_glfw "Build glfw" OFF)
+
+option(BUILD_glfw "Build glfw" ON)
 if (BUILD_glfw)
-    compile_glfw()
+    build_glfw()
 endif()
